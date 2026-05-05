@@ -1,18 +1,30 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
+// 🔐 TOKEN VIA RAILWAY (NÃO COLOCAR NO CÓDIGO)
+const TOKEN = process.env.TOKEN;
+
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-const TOKEN = "SEU_TOKEN_NOVO_AQUI";
-
+// 🔑 GERAR KEY
 function gerarKey() {
-    return Math.random().toString(36).substring(2,10).toUpperCase();
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
+// 📂 LER BANCO
+function lerDB() {
+    try {
+        return JSON.parse(fs.readFileSync("key.json"));
+    } catch {
+        return {};
+    }
+}
+
+// 💾 SALVAR KEY
 function salvarKey(key, dias) {
-    let db = JSON.parse(fs.readFileSync("keys.json"));
+    let db = lerDB();
 
     let exp;
     if (dias === "perm") {
@@ -23,13 +35,15 @@ function salvarKey(key, dias) {
 
     db[key] = exp;
 
-    fs.writeFileSync("keys.json", JSON.stringify(db, null, 2));
+    fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
 }
 
+// 🚀 BOT ONLINE
 client.on("ready", () => {
     console.log(`Bot ligado como ${client.user.tag}`);
 });
 
+// 🎮 COMANDOS
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -44,8 +58,26 @@ client.on("interactionCreate", async (interaction) => {
         const key = gerarKey();
         salvarKey(key, dias);
 
-        await interaction.reply(`Key criada: ${key}`);
+        await interaction.reply(`✅ Key criada: ${key}`);
+    }
+
+    // ❌ REMOVER KEY
+    if (interaction.commandName === "remover") {
+        const key = interaction.options.getString("key");
+
+        let db = lerDB();
+
+        if (!db[key]) {
+            return interaction.reply("❌ Key não encontrada");
+        }
+
+        delete db[key];
+
+        fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
+
+        await interaction.reply(`🗑️ Key removida: ${key}`);
     }
 });
 
+// 🔥 LOGIN
 client.login(TOKEN);
