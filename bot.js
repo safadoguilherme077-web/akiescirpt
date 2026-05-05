@@ -1,14 +1,20 @@
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require("discord.js");
 const fs = require("fs");
+const express = require("express");
 
 // 🔐 CONFIG
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = "1501071462667391037";
-const GUILD_ID = "1501054844469772439"; // ⚠️ IMPORTANTE
+const GUILD_ID = "1501054844469772439";
+
+// 🌐 API
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
+
 
 // ---------------------------------------------------
 // 🔑 BANCO DE KEYS
@@ -26,6 +32,10 @@ function lerDB() {
     }
 }
 
+function salvarDB(db) {
+    fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
+}
+
 function salvarKey(key, dias) {
     let db = lerDB();
 
@@ -37,9 +47,23 @@ function salvarKey(key, dias) {
     }
 
     db[key] = exp;
-
-    fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
+    salvarDB(db);
 }
+
+
+// ---------------------------------------------------
+// 🌐 ROTA PRA ROBLOX (ESSENCIAL)
+// ---------------------------------------------------
+
+app.get("/keys", (req, res) => {
+    const db = lerDB();
+    res.json(db);
+});
+
+app.listen(PORT, () => {
+    console.log(`🌍 API rodando na porta ${PORT}`);
+});
+
 
 // ---------------------------------------------------
 // 📡 COMANDOS
@@ -80,7 +104,7 @@ async function deployCommands() {
         console.log("🔄 Registrando comandos...");
 
         await rest.put(
-            Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), // ⚡ INSTANTÂNEO
+            Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
             { body: commands }
         );
 
@@ -90,6 +114,7 @@ async function deployCommands() {
     }
 }
 
+
 // ---------------------------------------------------
 // 🚀 BOT ONLINE
 // ---------------------------------------------------
@@ -98,6 +123,7 @@ client.on("clientReady", async () => {
     console.log(`🤖 Bot ligado como ${client.user.tag}`);
     await deployCommands();
 });
+
 
 // ---------------------------------------------------
 // 🎮 COMANDOS
@@ -134,12 +160,12 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         delete db[key];
-
-        fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
+        salvarDB(db);
 
         await interaction.reply(`🗑️ Key removida: ${key}`);
     }
 });
+
 
 // ---------------------------------------------------
 // 🔥 LOGIN
