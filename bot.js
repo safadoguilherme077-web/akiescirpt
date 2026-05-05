@@ -1,19 +1,22 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require("discord.js");
 const fs = require("fs");
 
-// 🔐 TOKEN VIA RAILWAY (NÃO COLOCAR NO CÓDIGO)
+// 🔐 CONFIG
 const TOKEN = process.env.TOKEN;
+const CLIENT_ID = "1501071462667391037";
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
-// 🔑 GERAR KEY
+---------------------------------------------------
+// 🔑 BANCO DE KEYS
+---------------------------------------------------
+
 function gerarKey() {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-// 📂 LER BANCO
 function lerDB() {
     try {
         return JSON.parse(fs.readFileSync("key.json"));
@@ -22,7 +25,6 @@ function lerDB() {
     }
 }
 
-// 💾 SALVAR KEY
 function salvarKey(key, dias) {
     let db = lerDB();
 
@@ -38,12 +40,68 @@ function salvarKey(key, dias) {
     fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
 }
 
+---------------------------------------------------
+// 📡 REGISTRAR COMANDOS
+---------------------------------------------------
+
+const commands = [
+
+    new SlashCommandBuilder()
+        .setName("key")
+        .setDescription("Gerar key")
+        .addStringOption(option =>
+            option.setName("tipo")
+                .setDescription("Tipo da key")
+                .setRequired(true)
+                .addChoices(
+                    { name: "diaria", value: "diaria" },
+                    { name: "3dias", value: "3dias" },
+                    { name: "mensal", value: "mensal" },
+                    { name: "perm", value: "perm" }
+                )
+        ),
+
+    new SlashCommandBuilder()
+        .setName("remover")
+        .setDescription("Remover key")
+        .addStringOption(option =>
+            option.setName("key")
+                .setDescription("Key para remover")
+                .setRequired(true)
+        )
+
+].map(cmd => cmd.toJSON());
+
+const rest = new REST({ version: "10" }).setToken(TOKEN);
+
+async function deployCommands() {
+    try {
+        console.log("🔄 Registrando comandos...");
+
+        await rest.put(
+            Routes.applicationCommands(CLIENT_ID),
+            { body: commands }
+        );
+
+        console.log("✅ Comandos registrados!");
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+---------------------------------------------------
 // 🚀 BOT ONLINE
-client.on("ready", () => {
-    console.log(`Bot ligado como ${client.user.tag}`);
+---------------------------------------------------
+
+client.on("ready", async () => {
+    console.log(`🤖 Bot ligado como ${client.user.tag}`);
+    await deployCommands();
 });
 
+---------------------------------------------------
 // 🎮 COMANDOS
+---------------------------------------------------
+
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
@@ -61,7 +119,6 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply(`✅ Key criada: ${key}`);
     }
 
-    // ❌ REMOVER KEY
     if (interaction.commandName === "remover") {
         const key = interaction.options.getString("key");
 
@@ -79,5 +136,8 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+---------------------------------------------------
 // 🔥 LOGIN
+---------------------------------------------------
+
 client.login(TOKEN);
