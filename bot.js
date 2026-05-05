@@ -4,6 +4,7 @@ const fs = require("fs");
 // 🔐 CONFIG
 const TOKEN = process.env.TOKEN;
 const CLIENT_ID = "1501071462667391037";
+const GUILD_ID = "1501054844469772439"; // ⚠️ IMPORTANTE
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
@@ -41,7 +42,7 @@ function salvarKey(key, dias) {
 }
 
 // ---------------------------------------------------
-// 📡 REGISTRAR COMANDOS
+// 📡 COMANDOS
 // ---------------------------------------------------
 
 const commands = [
@@ -79,7 +80,7 @@ async function deployCommands() {
         console.log("🔄 Registrando comandos...");
 
         await rest.put(
-            Routes.applicationCommands(CLIENT_ID),
+            Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), // ⚡ INSTANTÂNEO
             { body: commands }
         );
 
@@ -93,7 +94,7 @@ async function deployCommands() {
 // 🚀 BOT ONLINE
 // ---------------------------------------------------
 
-client.on("ready", async () => {
+client.on("clientReady", async () => {
     console.log(`🤖 Bot ligado como ${client.user.tag}`);
     await deployCommands();
 });
@@ -117,7 +118,9 @@ client.on("interactionCreate", async (interaction) => {
         const key = gerarKey();
         salvarKey(key, dias);
 
-        await interaction.reply(`✅ Key criada: ${key}`);
+        await interaction.reply(
+            `🔑 **Aqui está sua key:** \`${key}\`\n👤 ID: ${interaction.user.id}`
+        );
     }
 
     // ❌ REMOVER KEY
