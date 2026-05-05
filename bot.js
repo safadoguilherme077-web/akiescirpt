@@ -9,9 +9,9 @@ const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
 
----------------------------------------------------
+// ---------------------------------------------------
 // 🔑 BANCO DE KEYS
----------------------------------------------------
+// ---------------------------------------------------
 
 function gerarKey() {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -40,9 +40,9 @@ function salvarKey(key, dias) {
     fs.writeFileSync("key.json", JSON.stringify(db, null, 2));
 }
 
----------------------------------------------------
+// ---------------------------------------------------
 // 📡 REGISTRAR COMANDOS
----------------------------------------------------
+// ---------------------------------------------------
 
 const commands = [
 
@@ -89,22 +89,23 @@ async function deployCommands() {
     }
 }
 
----------------------------------------------------
+// ---------------------------------------------------
 // 🚀 BOT ONLINE
----------------------------------------------------
+// ---------------------------------------------------
 
 client.on("ready", async () => {
     console.log(`🤖 Bot ligado como ${client.user.tag}`);
     await deployCommands();
 });
 
----------------------------------------------------
+// ---------------------------------------------------
 // 🎮 COMANDOS
----------------------------------------------------
+// ---------------------------------------------------
 
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
+    // 🔑 GERAR KEY
     if (interaction.commandName === "key") {
         const tipo = interaction.options.getString("tipo");
 
@@ -119,6 +120,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply(`✅ Key criada: ${key}`);
     }
 
+    // ❌ REMOVER KEY
     if (interaction.commandName === "remover") {
         const key = interaction.options.getString("key");
 
@@ -136,8 +138,8 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
----------------------------------------------------
+// ---------------------------------------------------
 // 🔥 LOGIN
----------------------------------------------------
+// ---------------------------------------------------
 
 client.login(TOKEN);
